@@ -1,0 +1,822 @@
+1) Implicit conversions in constexprs that change value
+=======================================================
+Description : 
+	Implicit conversions in constexprs are related to how the SystemVerilog compiler handles operations 
+involving constants of different data types.These conversions can lead to value changes, but  they are not
+always safe.which might not be immediately obvious and can potentially result in unintended behavior in hardware design.
+
+Example 1: 
+module implicit_conversion();
+    reg [3:0] a = 4'd7;
+    reg [2:0] b = 3'd5;
+    reg [4:0] result;
+
+    always_comb begin
+        result = a + b;
+    end
+
+    initial begin
+        $display("Result: %d", result);
+    end
+endmodule
+	In this example, a is a 4-bit value and b is a 3-bit value.The always_comb block calculates the sum of a and b 
+and assigns the result to the result signal.Due to implicit conversions, the value of b gets extended to match
+the width of a during the addition operation,resulting in b becoming 4'd5 (padded with a leading zero) and 
+the actual calculation becomes 7 + 5 = 12.While this might be the desired behavior in some cases, it can lead 
+to confusion and bugs if not understood properly.To avoid such implicit conversions and their potential impact
+on the design, it's recommended to make the conversions explicit by using casting 
+or resizing operations.
+
+Example 2: 
+module explicit_conversion();
+    reg [3:0] a = 4'd7;
+    reg [2:0] b = 3'd5;
+    reg [4:0] result;
+
+    always_comb begin
+        result = a + $signed(b)
+    end
+
+    initial begin
+        $display("Result: %d", result);
+    end
+endmodule
+
+In this modified code, $signed(b) explicitly converts the unsigned 3-bit b into a signed value, preventing any implicit conversion.
+This ensures that the behavior of the addition is as intended.In summary, while implicit conversions can be convenient, they can 
+also lead to unexpected behavior when working with constants of different data types in constexprs.To ensure predictable results and 
+avoid potential bugs, it's a good practice to make these conversions explicit using casting or resizing operations.
+
+	
+2) Empty loop/if body
+=====================
+Description : 
+An empty loop or if body refers to a loop or conditional statement that doesn't contain any executable code within its block. 
+It's usually used when you want to repeat a certain operation a specific number of times or until a certain condition is met, 
+but you don't need to execute any code within the loop body itself.
+
+Empty loops and if statements can be a useful tool for creating delays or checking conditions without taking any action. 
+They can also be used to make code more readable and maintainable.
+
+Example 1 Empty Loop:
+For example, an empty loop can be used to create a delay. The following code creates a loop that delays for 100 nanoseconds:
+
+module delay(
+  input clk,
+  output reg [31:0] data
+);
+
+  always @(posedge clk) begin
+    for (int i = 0; i < 100; i++) begin
+      // empty loop
+    end
+    data <= 1;
+  end
+
+endmodule
+
+Example 2 Empty If: 
+In this example, the if statement will only take action if the value of x is not equal to 10. Otherwise, it will simply do nothing.
+module empty_if(
+  input clk,
+  output reg [31:0] x,
+  output reg [31:0] y
+);
+
+  always @(posedge clk) begin
+    if (x == 10) begin
+      // empty if statement
+    end else begin
+      y <= 20;
+    end
+  end
+
+endmodule
+
+
+3) Header guard mismatch
+========================
+Description:
+	A header guard mismatch error in SystemVerilog occurs when the preprocessor encounters two or more #include directives
+that refer to the same header file,but with different header guards. This can happen if the header files are included in
+different orders, or if the header guards are not properly defined.
+
+To fix a header guard mismatch error, you need to make sure that all of the #include directives for a given header file refer 
+to the same header guard.We can do this by defining the header guard in the header file itself, or by using a global header 
+guard that is defined in a separate file.
+
+Example:
+// Source file where you want to include the header
+`ifndef MY_HEADER_FILE_SV
+`define MY_HEADER_FILE_SV
+`include "my_header_file.sv"
+`endif
+
+
+4) Misleading if else indentation
+=================================
+Description:
+	Misleading indentation in SystemVerilog, as in any programming language, can lead to confusion and errors in code interpretation. 
+Proper indentation is essential for improving code readability and maintaining a clear understanding of the logical structure.
+In SystemVerilog, indentation is particularly important due to its hierarchical nature in describing hardware structures.
+
+Example:
+module misleading_indentation(input wire condition, output wire result);
+    if (condition) 
+        if (result)
+            result <= 1'b0;
+    else
+        result <= 1'b1;
+endmodule
+	This means that the else statement is associated with the inner if statement, not the outer one. 
+To avoid this kind of misleading indentation, it's good practice to always use curly braces to explicitly define the scope of your if-else statements:
+
+Example:
+module proper_indentation(input wire condition, output wire result);
+    if (condition) 
+    begin
+        if (result)
+            result <= 1'b0;
+    end
+    else
+        result <= 1'b1;
+endmodule
+By using proper indentation and curly braces, you make your code more readable and reduce the risk of misinterpreting the logical structure.
+
+
+5) Upward names
+===============
+Description:
+	In SystemVerilog, upward names allow a lower level module to reference items in a module above it in the hierarchy. 
+This is done by using the . operator with the instance name of the upper module.Upward names are a powerful feature that can be 
+used to simplify the design of hierarchical systems.They can also be used to make designs more modular and reusable.
+
+Example:
+module top;
+   logic signal;
+endmodule
+
+module sub;
+   top top_inst;
+   always @(posedge clk) begin
+      top_inst.signal = 1;
+   end
+endmodule
+	In the sub module, we can use the following code to reference the signal variable in the top module:
+
+top_inst.signal = 1;
+	This is because the . operator will first look for the signal variable in the current scope (the sub module). 
+If it does not find it, it will then look for the signal variable in the enclosing scope (the top module). If it finds it there, it will use that variable.
+
+	Upward names can be used to reference any type of object, including variables, nets, memories, tasks, and functions. 
+They can also be used to reference objects that are declared in generate blocks or in the initial or always blocks.
+
+
+6) Implicit conversions
+=======================
+Description:
+	In SystemVerilog, an implicit conversion is a type conversion that is performed automatically by the compiler without the need for any explicit casting. 
+Implicit conversions can be used to convert between different data types, such as integers, real numbers, and strings.
+
+Example:
+int x = 10;
+real y = x; // Implicit conversion from int to real
+
+	Implicit conversions can be very convenient, but it is important to be aware of the limitations. For example, implicit conversions 
+may not always produce the desired results. In the following example, the implicit conversion of the string "10" to an integer will produce the value 10,
+even though the string actually contains the character "0" at the end:
+
+Example:
+string d = "100";
+int e = d; // Implicit conversion from string to int
+	In this case, the compiler will simply ignore the character "0" and convert the string to the integer value 10. If you need to 
+ensure that the entire string is converted to an integer, you can use an explicit cast, as shown below:
+
+Example:
+int f = (int)d; // Explicit conversion from string to int
+
+	Implicit conversions are a powerful tool that can be used to simplify your SystemVerilog code. However, it is important to be aware
+of the limitations of implicit conversions and to use them carefully.
+
+
+7) Implicit params
+==================
+Description:
+	Implicit parameters in SystemVerilog are parameters that are not explicitly declared in the module definition, 
+but are instead specified when the module is instantiated. This can be useful for creating modules that can be 
+customized at runtime, without having to modify the module definition itself.
+
+	To use implicit parameters, you simply specify the parameter name and value in the module instantiation statement. 
+For example,the following code instantiates a module with two implicit parameters:
+
+module #(parameter width = 8, parameter depth = 16) my_module (
+  input clk,
+  input reset,
+  output [width-1:0] out
+);
+
+  reg [width-1:0] data [depth-1:0];
+
+  always @(posedge clk) begin
+    if (reset) begin
+      for (int i = 0; i < depth; i++) begin
+        data[i] = 0;
+      end
+    end else begin
+      data[0] <= data[1];
+      for (int i = 1; i < depth-1; i++) begin
+        data[i] <= data[i+1];
+      end
+    end
+  end
+
+  assign out = data[0];
+
+endmodule
+	In this example, the width and depth parameters are not explicitly declared in the module definition. 
+However, they are specified when the module is instantiated, as follows:
+
+my_module #(width=16, depth=32) u_my_module (
+  .clk(clk),
+  .reset(reset),
+  .out(out)
+);
+The width parameter is set to 16, and the depth parameter is set to 32. These values will be used by the module when it is instantiated.
+
+	Implicit parameters can be a powerful tool for creating reusable and customizable modules.
+They can also be used to simplify the code for modules that have a large number of parameters.
+
+
+
+8) Self-assign
+==============
+Description:
+
+	In SystemVerilog, a self-assign is an assignment statement where the left-hand side and right-hand side of the assignment are the same signal.
+This is typically done to change the value of a signal, but it can also be used to create a feedback loop.
+
+Example for self-assign statement:
+
+reg [7:0] counter = 0;
+
+always @(posedge clk) begin
+  counter = counter + 1;
+end
+
+	In this example, the counter signal is assigned its own value plus 1. This will cause the counter to increment by 1 every time the clock signal goes high.
+Self-assigns can also be used to create feedback loops.
+ 
+For example, the following code creates a feedback loop that will cause the output of the counter to oscillate between 0 and 1:
+
+reg [7:0] counter = 0;
+
+always @(posedge clk) begin
+  counter = counter ^ 1;
+end
+	In this example, the counter signal is assigned the exclusive-or of its own value and 1. 
+This will cause the counter to toggle between 0 and 1 every time the clock signal goes high.
+Self-assigns can be a powerful tool for modeling certain types of circuits, but they should be used with caution.
+If used incorrectly, they can create infinite loops or other unintended behavior.
+ 
+9) Shadowing names
+==================
+Description: 
+	In SystemVerilog, shadowing occurs when a declaration within a nested scope (like a block, function, or module) has the 
+same name as a declaration in an outer scope. This can lead to confusion and unexpected behavior as the inner declaration "shadows" the 
+outer declaration,making it inaccessible within the inner scope.
+
+For example, consider the following code:
+
+module top;
+  int data = 5;
+  
+  initial begin
+    int data = 10; // This shadows the outer 'data' variable
+    $display("Inner data: %0d", data); // This will print the inner 'data'
+  end
+  
+  initial begin
+    $display("Outer data: %0d", data); // This will print the outer 'data'
+  end
+endmodule
+
+	In this example, there are two initial blocks inside the top module. The second initial block prints the value of the outer data variable,
+while the first initial block defines a new variable named data, effectively shadowing the outer data variable. This can lead to confusion 
+when trying to access the outer data variable from within the first initial block.
+
+
+10) Signedness issues
+=====================
+Description:
+	Signedness issues in SystemVerilog can arise when you are not careful about the widths of your variables and the types of arithmetic operations 
+you are performing.
+
+For example, consider the following code:
+
+reg [7:0] d2;
+reg [3:0] i1;
+
+always @(posedge clk) begin
+  d2 <= 4'sd2 - i1;
+end
+In this code, d2 is a signed 8-bit register, i1 is an unsigned 4-bit register, and 4'sd2 is a constant that is assigned the value 00001000b.
+
+When the always block executes, the following calculation is performed:
+
+d2 <= 00001000b - 000011b = 00000001b
+
+	This calculation is performed using unsigned arithmetic, because the width of d2 is greater than the width of i1. 
+The result of the calculation is 00000001b, which is 1 in binary.However, because d2 is a signed register,
+the value 1 is interpreted as a negative number, so the final value of d2 is -128.This is a signedness issue because the result 
+of the calculation is different depending on the widths of the variables involved and the type of arithmetic that is performed.
+
+	To avoid this issue, you should always be careful about the widths of your variables and the types of arithmetic operations you are performing. 
+In this case, you could avoid the issue by using the $unsigned system function to convert i1 to a signed 4-bit number before performing the subtraction.
+
+The following code would produce the correct result:
+
+reg [7:0] d2;
+reg [3:0] i1;
+
+always @(posedge clk) begin
+  d2 <= 4'sd2 - $unsigned(i1);
+end
+
+	In this code, the $unsigned system function converts i1 to a signed 4-bit number, so the subtraction is performed using signed arithmetic. 
+The result of the calculation is 127, which is the correct value for d2.
+
+
+11) Switch coverage of enum
+===========================
+Description:
+We can use a switch statement to cover the values of an enum in SystemVerilog. 
+
+Example:
+
+typedef enum {
+  IDLE,
+  READY,
+  BUSY
+} state_t;
+
+covergroup state_cg;
+  option.per_instance = 1;
+  state: coverpoint state {
+    bins {
+      IDLE,
+      READY,
+      BUSY
+    }
+  }
+endgroup
+
+module top;
+  state_t state;
+
+  initial begin
+    state = IDLE;
+  end
+
+  always @(posedge clk) begin
+    switch (state) begin
+      case (IDLE) begin
+        $display("State is IDLE");
+        state = READY;
+        break;
+      end
+      case (READY) begin
+        $display("State is READY");
+        state = BUSY;
+        break;
+      end
+      case (BUSY) begin
+        $display("State is BUSY");
+        state = IDLE;
+        break;
+      end
+      default begin
+        $display("Invalid state");
+      end
+    endcase
+  end
+endmodule
+	This code defines an enum called state_t with three values: IDLE, READY, and BUSY. It then defines a covergroup called state_cg that covers the 
+values of the state variable. The state coverpoint has three bins, one for each value of the state_t enum.
+
+	The top module defines a state variable of type state_t. The always block in the top module uses a switch statement to control the value
+of the state variable. The switch statement checks the current value of the state variable and takes appropriate action based on the value.
+
+	The state_cg covergroup is used to track the values of the state variable. The state_cg covergroup will be covered if the state variable takes 
+on all three possible values: IDLE, READY, and BUSY.
+
+
+12) Uninitialized vars in constexprs
+====================================
+Description:
+	In SystemVerilog, uninitialized variables cannot be used in constexprs. This is because constexprs must evaluate to a constant value at compile time, 
+and the value of an uninitialized variable is not known until runtime.
+
+If you try to use an uninitialized variable in a constexpr, you will get a compile-time error. For example, the following code will not compile:
+
+module top (
+  input clk,
+  output reg [7:0] data
+);
+
+const int unsigned my_const = uninitialized_var; // This will cause a compile-time error
+
+always @(posedge clk) begin
+  data <= my_const;
+end
+
+endmodule
+To avoid this error, you must initialize the variable before you use it in a constexpr. For example, the following code will compile:
+
+module top (
+  input clk,
+  output reg [7:0] data
+);
+
+int unsigned my_const = 10; // This is a valid constant
+
+always @(posedge clk) begin
+  data <= my_const;
+end
+
+endmodule
+
+13) Unreachable code
+====================
+Description:
+	Unreachable code in SystemVerilog is code that cannot be executed under any possible circumstances during the runtime of a program. 
+This type of code is typically a result of human error or programming mistakes, such as dead code or redundant code.
+
+Example for unreachable code in SystemVerilog:
+
+A conditional statement where the condition is always false. For example:
+if (false)
+begin
+  // This code will never be executed.
+end
+
+
+14) Unused variables
+====================
+Description:
+	Unused variables in SystemVerilog are variables that are declared but never used. 
+They can be a source of bugs and can also make your code harder to read and maintain. 
+
+
+module test;
+  reg [7:0] unused_var_1;
+  reg [7:0] _unused_var_2;
+
+  always @(posedge clk) begin
+    unused_var_1 <= 1;
+    _unused_var_2 <= 1;
+  end
+endmodule
+
+	In this example, the unused_var_1 variable is not marked as unused, so the compiler will generate a warning for it. 
+The _unused_var_2 variable is marked as unused with the _ prefix, so the compiler will not generate a warning for it.
+
+
+15) Unused typedef
+==================
+Description:
+	In SystemVerilog, a typedef is a declaration that gives a user-defined name to an existing data type. 
+For example, the following typedef declares a new data type called foo_t that is equivalent to the built-in data type int:
+
+typedef int foo_t;
+
+	The typedef foo_t can then be used anywhere in the code where an int is allowed. 
+This can be useful for making the code more readable and maintainable, by avoiding the need to use the long and cumbersome int type name everywhere.
+However, if a typedef is declared but never used in the code, it will generate a warning from the compiler. 
+
+
+16) Unused functions
+====================
+Description:
+	In SystemVerilog, unused functions are functions that are declared but never called.
+They can be a source of code bloat and can also make it difficult to debug your code.
+ 
+Here is an example of how to mark a function as unused in SystemVerilog:
+
+function void my_function();
+  // This function is unused.
+endfunction
+Here is an example of how to create a function_define block for a function:
+
+function_define void my_function();
+  // This is a dummy function body.
+endfunction_define
+
+
+17) Unused parameters
+=====================
+Description:
+	Unused parameters in SystemVerilog are parameters that are declared in a module or interface but are never used in the module's or interface's code. 
+Unused parameters can be a source of confusion and errors, so it is important to find and remove this from our code.
+
+For example, the following module has an unused parameter:
+
+module my_module(
+  input clk,
+  input reset,
+  parameter int width = 8
+);
+
+  always @(posedge clk) begin
+    $display("The width of the data bus is %d.", width);
+  end
+
+endmodule
+
+
+18) Unused fields
+=================
+Description:
+	In SystemVerilog, unused fields are those that are declared in a module or interface but are not used anywhere in the design.
+Unused fields can be harmless, but they can also cause problems. 
+ 
+For example, unused fields can:
+
+Increase the size of the design, which can lead to performance problems.
+Cause synthesis warnings or errors.
+Make the design more difficult to understand and debug.
+
+
+19) Posedge of multi-bit value
+==============================
+Description:
+	In SystemVerilog, you can use the posedge keyword to trigger an event on the rising edge of a signal
+However, when dealing with multi-bit values (such as vectors or buses), we might want to trigger an event
+when any of the individual bits within the vector experience a rising edge.
+
+Here's an example of how we can achieve this using the posedge keyword and some bitwise logic:
+
+module MultiBitPosedge(input logic [7:0] signal);
+
+    always @(posedge signal) begin
+        // Your code here
+        $display("Posedge detected on any bit of signal.");
+    end
+
+endmodule
+	In this example, the posedge keyword is used to trigger the always block whenever there's a rising edge on the signal vector. 
+Inside the block,we can put the code that needs to execute when any bit in the vector experiences a positive edge transition.
+However, please note that this code would trigger the block whenever any bit in the vector experiences a rising edge. If we are looking
+for a way to detect a rising edge on a specific bit within the vector, you would need to capture the previous value of the bit 
+and compare it to the current value. This requires more logic and a storage element to hold the previous value.
+
+For example:
+module SpecificBitPosedge(input logic [7:0] signal);
+
+    logic [7:0] prev_signal;
+
+    always @(posedge signal) begin
+        for (int i = 0; i < 8; i++) begin
+            if (signal[i] && !prev_signal[i]) begin
+                // Rising edge detected on bit i
+                $display("Posedge detected on bit %0d of signal.", i);
+            end
+        end
+        prev_signal <= signal;
+    end
+
+endmodule
+	In this example, the previous value of the signal is stored in prev_signal, and then each bit is compared to its previous value to detect rising edges.
+
+
+20) Latches
+===========
+Description:
+	Latches are a specific type of sequential logic element used in digital circuits.
+Latches can lead to problems like race conditions, glitches, and increased power consumption. 
+They hold their previous state until explicitly updated, which might cause unintended behavior in sequential circuits.
+
+Avoiding Latches:
+
+	To avoid latches, it's recommended to use edge-triggered flip-flops. 
+Flip-flops are updated on clock edges, reducing the chances of race conditions and other issues.
+
+module flip_flop_example (
+    input wire clock,
+    input wire reset,
+    input wire data,
+    output reg q
+);
+    always @(posedge clock or posedge reset) begin
+        if (reset)
+            q <= 1'b0;
+        else
+            q <= data;
+    end
+endmodule
+
+
+21) Dangling else
+=================
+Description:
+	The dangling else problem is a syntactic ambiguity that can occur in SystemVerilog when there are nested if statements. 
+The problem arises because the else clause of an if statement can be ambiguously attached to the nearest if statement that precedes it.
+For example, the following code:
+
+if (a)
+  if (b)
+    c = 1;
+  else
+    d = 2;
+could be interpreted in two ways:
+
+	The else clause is attached to the first if statement, so c is assigned 1 when a is true and b is false.
+The else clause is attached to the second if statement, so d is assigned 2 when a is true and b is true.
+To avoid the dangling else problem, it is important to use begin-end to clearly delimit the scope of each if statement.
+For example, the following code is unambiguous:
+
+if (a) 
+begin
+  if (b)
+    c = 1;
+  else
+    d = 2;
+end
+	In this case, the else clause is clearly attached to the second if statement, because it is enclosed in the begin-end.
+
+
+22) String literal conversions
+==============================
+Description:
+In SystemVerilog, a string literal is a sequence of characters enclosed in double quotes. For example, the following is a string literal:
+
+"Hello, world!"
+
+String literals can be converted to other data types using the following methods:
+
+To a string variable: A string literal can be assigned to a string variable. 
+
+For example, the following code assigns the string literal "Hello, world!" to the string variable my_string:
+
+string my_string = "Hello, world!";
+
+Example:
+string myString = "123";
+int myInt = $atoi(myString);
+Note that if the string cannot be converted to an integer, $atoi() will return 0.
+
+
+23) Missing return
+==================
+Description:
+	In SystemVerilog, a missing return statement is a compile-time error that occurs when a function or task does not have 
+a return statement at the end of its body.This error is raised because the compiler cannot guarantee that the function or task will always return a value.
+
+For example, the following function has a missing return statement:
+
+function int my_function(int a, int b);
+begin
+  $display("This function is missing a return statement");
+end
+endfunction
+
+	This function will always return the value 0, because the compiler will insert a default return statement at the end of the function body. 
+However, this is not always the desired behavior. For example, if the function is called in an expression, the compiler will not be able to evaluate
+the expression correctly.
+To fix the missing return statement error, you must add a return statement to the end of the function body. The return statement must specify the value that the function will return. 
+For example, the following function is correct:
+
+function int my_function(int a, int b);
+begin
+  if (a > b)
+    return a;
+  else
+    return b;
+end
+endfunction
+
+	This function will return the larger of the two values, a and b.
+If you do not want the function to return a value, you can use the void keyword to specify that the function has no return value.
+For example, the following function is correct:
+
+function void my_function(int a, int b);
+begin
+  $display("This function has no return value");
+end
+endfunction
+
+	This function does not return a value. It is typically used to set up or initialize a group of variables.
+
+
+24) Comparisons that always eval to same result
+===============================================
+Description:
+	In SystemVerilog, as in many programming languages,there are situations where certain comparisons between values will always evaluate 
+to the same result.These are due to the inherent properties of the values being compared. Here are some examples:
+
+Equality Comparisons with Same Values:
+When comparing the same values for equality (==), the result will always be true.
+
+if (a == a) begin
+    // This block will always execute
+end
+
+Inequality Comparisons with Same Values:
+When comparing the same values for inequality (!=), the result will always be false.
+
+if (a != a) begin
+    // This block will never execute
+end
+
+Constant Comparison:
+When comparing a constant value with itself, the result will always be true.
+
+if (5'b1010 == 5'b1010) begin
+    // This block will always execute
+end
+
+Comparisons with Constant True/False:
+When comparing a value with a constant true value (1) using '==' or a constant false value (0) using '!=', the result will always be the 
+same as the constant value.
+
+if (b == 1) begin
+    // This block will only execute if b is true (1)
+end
+
+if (c != 0) begin
+    // This block will only execute if c is not false (0)
+end
+
+	It's important to note that in some cases, the compiler might optimize away unreachable code blocks during synthesis,
+even if the comparison is a tautology (always true) or a contradiction (always false). This optimization can help in reducing the 
+complexity of synthesized hardware.
+
+25) Enums in set membership ops
+===============================
+Description:
+	In SystemVerilog, enumerations (enums) are user-defined data types that consist of a set of named integer values. 
+Enums are often used to represent a finite set of possible states or values in a more readable and organized manner.
+
+	Enums can be used in set membership operations to check if a given value belongs to the enum's defined set. 
+Here's how we can use enums in set membership operations in SystemVerilog:
+
+Example:
+
+typedef enum bit [2:0] {
+    STATE_A = 3'b000,
+    STATE_B = 3'b001,
+    STATE_C = 3'b010,
+    STATE_D = 3'b011
+} StateType;
+
+module test;
+    StateType current_state;
+    
+    initial begin
+        current_state = STATE_B;
+        
+        if (current_state inside {STATE_A, STATE_B, STATE_C})
+            $display("Current state is either STATE_A, STATE_B, or STATE_C");
+        else
+            $display("Current state is not STATE_A, STATE_B, or STATE_C");
+            
+        if (current_state == STATE_D)
+            $display("Current state is STATE_D");
+        else
+            $display("Current state is not STATE_D");
+    end
+endmodule
+
+	In the above example, an enum called StateType is defined with four states: STATE_A, STATE_B, STATE_C, and STATE_D. 
+The module test demonstrates the usage of enums in set membership operations. 
+The inside operator is used to check if the current_state is a member of the set {STATE_A, STATE_B, STATE_C}.
+Additionally, the equality operator == is used to check if current_state is equal to STATE_D.
+
+
+26) Blocking assignments in ffs
+===============================
+Description:
+	Using blocking assignments in flip-flops (FFs) in SystemVerilog is generally not recommended due to the potential for simulation mismatches 
+and race conditions. 
+Blocking assignments in FFs can lead to unexpected simulation results because they don't accurately model the behavior of real hardware. 
+Here's an example of a problematic scenario using blocking assignments in FFs:
+
+always @(posedge clk) begin
+    q = d1; // Blocking assignment
+    d1 = d2;
+    d2 = some_other_signal;
+end
+
+In this example, if d1 and d2 are driven by external signals, a blocking assignment to q can cause issues.
+The assignment to q blocks further execution until the assignment is complete, which might lead to incorrect signal values 
+being used in subsequent assignments.
+To maintain proper synchronous behavior in flip-flops, non-blocking assignments are recommended:
+
+always @(posedge clk) begin
+    q <= d1; // Non-blocking assignment
+    d1 <= d2;
+    d2 <= some_other_signal;
+end
+
+Non-blocking assignments in this context ensure that the signal updates are scheduled to occur concurrently at the appropriate clock edge, 
+which is more representative of the behavior of actual flip-flop hardware.
+
